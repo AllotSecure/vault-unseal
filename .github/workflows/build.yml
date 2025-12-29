@@ -77,6 +77,6 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/omegion/vault-unseal:latest,ghcr.io/omegion/vault-unseal:${{ needs.release.outputs.new_tag }}
+          tags: ghcr.io/${{ github.repository }}:latest,ghcr.io/${{ github.repository }}:${{ needs.release.outputs.new_tag }}
           platforms: linux/amd64,linux/arm64
           build-args: VERSION=${{ needs.release.outputs.new_tag }}
