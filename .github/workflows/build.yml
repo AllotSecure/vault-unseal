@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        type: string
   workflow_run:
     workflows: ["Tests"]
     branches: [master, allot]
@@ -14,17 +20,18 @@ jobs:
   release:
     name: Release GitHub tag
     runs-on: 'ubuntu-latest'
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: write
     outputs:
-      new_tag: ${{ steps.tag_version.outputs.new_tag }}
+      new_tag: ${{ steps.tag_version.outputs.new_tag || inputs.version }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
 
       - name: Bump version and push tag
         id: tag_version
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         uses: mathieudutour/github-tag-action@v6.2
         with:
           default_bump: minor
@@ -33,9 +40,9 @@ jobs:
       - name: Release with Notes
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag_version.outputs.new_tag }}
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag || inputs.version }}
+          name: Release ${{ steps.tag_version.outputs.new_tag || inputs.version }}
+          body: ${{ steps.tag_version.outputs.changelog || 'Manual release' }}
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
